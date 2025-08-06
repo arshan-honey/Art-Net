@@ -32,7 +32,7 @@ export function Navbar() {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center space-x-2">
               <Palette className="h-8 w-8 text-primary" />
-              <span className="font-bold text-xl">Art Portfolio Hub</span>
+              <span className="font-bold text-xl">Art Net</span>
             </Link>
 
             <div className="hidden md:flex items-center space-x-6">

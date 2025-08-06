@@ -1,8 +1,6 @@
-# Art Portfolio Hub
+# Art Net
 
 A comprehensive web platform for artists to showcase their work and build professional portfolios, while providing art enthusiasts with a curated space to discover and engage with creative content.
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/abubakarraza64gmailcoms-projects/v0-art-portfolio-hub)
 
 ## 🎨 Features
 
@@ -110,8 +108,6 @@ npx prisma migrate reset
 ```
 
 ## 🌐 Live Demo
-
-**🔗 Application URL**: [Art Portfolio Hub Demo](https://vercel.com/abubakarraza64gmailcoms-projects/v0-art-portfolio-hub)
 
 ### Demo Credentials
 

@@ -101,7 +101,7 @@ export default function RegisterPage() {
       if (success) {
         toast({
           title: "Account created!",
-          description: "Welcome to Art Portfolio Hub.",
+          description: "Welcome to Art Net.",
         });
         router.push("/");
       } else {
@@ -120,7 +120,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <Palette className="h-8 w-8 text-primary" />
-            <span className="font-bold text-2xl">Art Portfolio Hub</span>
+            <span className="font-bold text-2xl">Art Net</span>
           </Link>
         </div>
 

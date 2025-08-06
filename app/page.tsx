@@ -370,7 +370,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Palette className="h-8 w-8" />
-                <span className="font-bold text-xl">Art Portfolio Hub</span>
+                <span className="font-bold text-xl">Art Net</span>
               </div>
               <p className="text-gray-400">
                 The premier platform for artists to showcase their work and
@@ -439,7 +439,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Art Portfolio Hub. All rights reserved.</p>
+            <p>&copy; 2025 Art Net. All rights reserved.</p>
           </div>
         </div>
       </footer>

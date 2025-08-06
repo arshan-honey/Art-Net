@@ -413,7 +413,7 @@ export default function EditArtworkPage({ params }: EditArtworkPageProps) {
                     <Input
                       id="yearCreated"
                       type="number"
-                      placeholder="e.g., 2024"
+                      placeholder="e.g., 2025"
                       value={yearCreated}
                       onChange={(e) => setYearCreated(e.target.value)}
                       min="1900"

@@ -1,9 +1,14 @@
-import { PrismaClient, UserRole, ArtworkStatus, CollectionVisibility } from "@prisma/client"
+import {
+  PrismaClient,
+  UserRole,
+  ArtworkStatus,
+  CollectionVisibility,
+} from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting database seed...")
+  console.log("🌱 Starting database seed...");
 
   // Create categories
   const categories = await Promise.all([
@@ -39,7 +44,7 @@ async function main() {
         image: "/placeholder.svg?height=200&width=300",
       },
     }),
-  ])
+  ]);
 
   // Create tags
   const tags = await Promise.all([
@@ -58,7 +63,7 @@ async function main() {
     prisma.tag.create({
       data: { name: "Minimalist", slug: "minimalist", color: "#FFEAA7" },
     }),
-  ])
+  ]);
 
   // Create admin user
   const adminUser = await prisma.user.create({
@@ -70,10 +75,10 @@ async function main() {
       displayName: "Art Admin",
       role: UserRole.ADMIN,
       isVerified: true,
-      bio: "Platform administrator managing the Art Portfolio Hub.",
+      bio: "Platform administrator managing the Art Net.",
       avatar: "/placeholder-user.jpg",
     },
-  })
+  });
 
   // Create sample artists
   const artist1 = await prisma.user.create({
@@ -98,11 +103,12 @@ async function main() {
           education: "MFA from Parsons School of Design",
           isPublic: true,
           acceptCommissions: true,
-          commissionInfo: "Available for custom abstract paintings and digital artwork.",
+          commissionInfo:
+            "Available for custom abstract paintings and digital artwork.",
         },
       },
     },
-  })
+  });
 
   const artist2 = await prisma.user.create({
     data: {
@@ -120,14 +126,18 @@ async function main() {
         create: {
           artistStatement:
             "Through my lens, I capture the raw beauty of urban life and the stories hidden in city streets.",
-          specialties: ["Street Photography", "Urban Landscapes", "Portrait Photography"],
+          specialties: [
+            "Street Photography",
+            "Urban Landscapes",
+            "Portrait Photography",
+          ],
           experience: "12 years",
           isPublic: true,
           acceptCommissions: true,
         },
       },
     },
-  })
+  });
 
   // Create sample enthusiasts
   const enthusiast1 = await prisma.user.create({
@@ -141,14 +151,15 @@ async function main() {
       bio: "Art enthusiast and collector with a passion for contemporary works.",
       avatar: "/placeholder-user.jpg",
     },
-  })
+  });
 
   // Create sample artworks
   const artwork1 = await prisma.artwork.create({
     data: {
       title: "Urban Sunset",
       slug: "urban-sunset",
-      description: "A vibrant abstract representation of city life at dusk, blending warm oranges and cool blues.",
+      description:
+        "A vibrant abstract representation of city life at dusk, blending warm oranges and cool blues.",
       artistId: artist1.id,
       primaryImage: "/placeholder.jpg",
       medium: "Acrylic on Canvas",
@@ -171,13 +182,14 @@ async function main() {
         ],
       },
     },
-  })
+  });
 
   const artwork2 = await prisma.artwork.create({
     data: {
       title: "Street Stories",
       slug: "street-stories",
-      description: "A candid moment captured on the bustling streets of downtown, showcasing human connection.",
+      description:
+        "A candid moment captured on the bustling streets of downtown, showcasing human connection.",
       artistId: artist2.id,
       primaryImage: "/placeholder.jpg",
       medium: "Digital Photography",
@@ -199,14 +211,15 @@ async function main() {
         ],
       },
     },
-  })
+  });
 
   // Create sample collections
   const collection1 = await prisma.collection.create({
     data: {
       name: "Modern Abstracts",
       slug: "modern-abstracts",
-      description: "A curated collection of contemporary abstract artworks that push creative boundaries.",
+      description:
+        "A curated collection of contemporary abstract artworks that push creative boundaries.",
       userId: enthusiast1.id,
       visibility: CollectionVisibility.PUBLIC,
       coverImage: "/placeholder.jpg",
@@ -220,7 +233,7 @@ async function main() {
         ],
       },
     },
-  })
+  });
 
   // Create some interactions
   await prisma.like.create({
@@ -228,14 +241,14 @@ async function main() {
       userId: enthusiast1.id,
       artworkId: artwork1.id,
     },
-  })
+  });
 
   await prisma.follow.create({
     data: {
       followerId: enthusiast1.id,
       followingId: artist1.id,
     },
-  })
+  });
 
   await prisma.comment.create({
     data: {
@@ -243,44 +256,48 @@ async function main() {
       userId: enthusiast1.id,
       artworkId: artwork1.id,
     },
-  })
+  });
 
   // Create system settings
   await prisma.systemSetting.createMany({
     data: [
-      { key: "site_name", value: "Art Portfolio Hub" },
-      { key: "site_description", value: "Discover and showcase amazing artwork from talented artists worldwide." },
+      { key: "site_name", value: "Art Net" },
+      {
+        key: "site_description",
+        value:
+          "Discover and showcase amazing artwork from talented artists worldwide.",
+      },
       { key: "max_upload_size", value: "10485760" }, // 10MB in bytes
       { key: "featured_artists_count", value: "6" },
       { key: "maintenance_mode", value: "false" },
     ],
-  })
+  });
 
-  console.log("✅ Database seeded successfully!")
-  console.log("\n📊 Created:")
-  console.log(`- ${categories.length} categories`)
-  console.log(`- ${tags.length} tags`)
-  console.log("- 1 admin user")
-  console.log("- 2 artists with profiles")
-  console.log("- 1 enthusiast")
-  console.log("- 2 artworks")
-  console.log("- 1 collection")
-  console.log("- Sample interactions (likes, follows, comments)")
-  console.log("- System settings")
+  console.log("✅ Database seeded successfully!");
+  console.log("\n📊 Created:");
+  console.log(`- ${categories.length} categories`);
+  console.log(`- ${tags.length} tags`);
+  console.log("- 1 admin user");
+  console.log("- 2 artists with profiles");
+  console.log("- 1 enthusiast");
+  console.log("- 2 artworks");
+  console.log("- 1 collection");
+  console.log("- Sample interactions (likes, follows, comments)");
+  console.log("- System settings");
 
-  console.log("\n🔐 Demo Credentials:")
-  console.log("Admin: admin@artportfolio.com")
-  console.log("Artist 1: sarah.artist@example.com")
-  console.log("Artist 2: mike.photographer@example.com")
-  console.log("Enthusiast: emma.collector@example.com")
+  console.log("\n🔐 Demo Credentials:");
+  console.log("Admin: admin@artportfolio.com");
+  console.log("Artist 1: sarah.artist@example.com");
+  console.log("Artist 2: mike.photographer@example.com");
+  console.log("Enthusiast: emma.collector@example.com");
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

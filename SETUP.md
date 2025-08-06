@@ -1,6 +1,6 @@
-# Art Portfolio Hub - Setup Guide
+# Art Net - Setup Guide
 
-Quick start guide to get the Art Portfolio Hub running on your local machine.
+Quick start guide to get the Art Net running on your local machine.
 
 ## 📋 System Requirements
 
