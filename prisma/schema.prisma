@@ -1,0 +1,550 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  VISITOR
+  ENTHUSIAST
+  ARTIST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DEACTIVATED
+}
+
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  UNDER_REVIEW
+  REJECTED
+}
+
+enum ArtworkLicenseType {
+  PERSONAL_USE
+  COMMERCIAL_USE
+  EXCLUSIVE_LICENSE
+  CREATIVE_COMMONS
+  ALL_RIGHTS_RESERVED
+}
+
+enum CollectionVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  COLLECTION_ADD
+  ARTWORK_FEATURED
+  SYSTEM_ANNOUNCEMENT
+  PURCHASE_CONFIRMATION
+  LICENSE_REQUEST
+}
+
+enum ReportType {
+  INAPPROPRIATE_CONTENT
+  COPYRIGHT_VIOLATION
+  SPAM
+  HARASSMENT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// Core Models
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  username      String     @unique
+  firstName     String?
+  lastName      String?
+  password      String?
+  displayName   String?
+  bio           String?
+  avatar        String?
+  coverImage    String?
+  website       String?
+  location      String?
+  role          UserRole   @default(ENTHUSIAST)
+  status        UserStatus @default(ACTIVE)
+  isVerified    Boolean    @default(false)
+  emailVerified DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Artist-specific fields
+  artistProfile ArtistProfile?
+
+  // Social connections
+  following Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+
+  // Content creation
+  artworks        Artwork[]
+  collections     Collection[]
+  comments        Comment[]
+  likes           Like[]
+  collectionLikes CollectionLike[]
+
+  // Activity and notifications
+  notifications   Notification[]
+  reports         Report[]       @relation("ReportedBy")
+  reportedContent Report[]       @relation("ReportedUser")
+
+  // Transactions
+  purchases Transaction[] @relation("Buyer")
+  sales     Transaction[] @relation("Seller")
+
+  // System tracking
+  loginHistory     LoginHistory[]
+  CollectionFollow CollectionFollow[]
+
+  @@map("users")
+}
+
+model ArtistProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Professional info
+  artistStatement String?
+  specialties     String[] // Array of specialties
+  experience      String? // Years of experience
+  education       String?
+  awards          String?
+  exhibitions     String?
+
+  // Contact and business
+  businessEmail String?
+  phone         String?
+  socialLinks   Json? // Social media links as JSON
+
+  // Portfolio settings
+  portfolioTheme    String? @default("default")
+  customDomain      String? @unique
+  isPublic          Boolean @default(true)
+  acceptCommissions Boolean @default(false)
+  commissionInfo    String?
+
+  // Statistics
+  totalViews     Int @default(0)
+  totalLikes     Int @default(0)
+  totalFollowers Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("artist_profiles")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+
+  // Content associations
+  artworks ArtworkCategory[]
+
+  // Metadata
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Tag {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  slug  String  @unique
+  color String? // Hex color for tag display
+
+  // Content associations
+  artworks    ArtworkTag[]
+  collections CollectionTag[]
+
+  // Statistics
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("tags")
+}
+
+model Artwork {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  description String?
+
+  // Artist information
+  artistId String
+  artist   User   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  // Media and content
+  primaryImage String // Main artwork image
+  images       ArtworkImage[] // Additional images
+  dimensions   Json? // Width, height, depth as JSON
+  medium       String? // Oil on canvas, Digital, etc.
+  yearCreated  Int?
+
+  // Categorization
+  categories ArtworkCategory[]
+  tags       ArtworkTag[]
+
+  // Status and visibility
+  status     ArtworkStatus @default(DRAFT)
+  isPublic   Boolean       @default(true)
+  isFeatured Boolean       @default(false)
+
+  // Pricing and licensing
+  isForSale    Boolean            @default(false)
+  price        Decimal?           @db.Decimal(10, 2)
+  currency     String?            @default("USD")
+  licenseType  ArtworkLicenseType @default(ALL_RIGHTS_RESERVED)
+  licensePrice Decimal?           @db.Decimal(10, 2)
+
+  // Engagement
+  views       Int                 @default(0)
+  likes       Like[]
+  comments    Comment[]
+  collections CollectionArtwork[]
+
+  // SEO and metadata
+  metaTitle       String?
+  metaDescription String?
+  altText         String?
+
+  // System tracking
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@map("artworks")
+}
+
+model ArtworkImage {
+  id        String  @id @default(cuid())
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  url       String
+  altText   String?
+  caption   String?
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("artwork_images")
+}
+
+model ArtworkCategory {
+  id         String   @id @default(cuid())
+  artworkId  String
+  categoryId String
+  artwork    Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([artworkId, categoryId])
+  @@map("artwork_categories")
+}
+
+model ArtworkTag {
+  id        String  @id @default(cuid())
+  artworkId String
+  tagId     String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([artworkId, tagId])
+  @@map("artwork_tags")
+}
+
+model Collection {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  coverImage  String?
+
+  // Owner information
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Settings
+  visibility CollectionVisibility @default(PUBLIC)
+  isPublic   Boolean              @default(true)
+
+  // Content
+  artworks CollectionArtwork[]
+  tags     CollectionTag[]
+
+  // Engagement
+  likes     CollectionLike[]
+  followers CollectionFollow[]
+  views     Int                @default(0)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("collections")
+}
+
+model CollectionArtwork {
+  id           String     @id @default(cuid())
+  collectionId String
+  artworkId    String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  sortOrder Int      @default(0)
+  addedAt   DateTime @default(now())
+
+  @@unique([collectionId, artworkId])
+  @@map("collection_artworks")
+}
+
+model CollectionTag {
+  id           String     @id @default(cuid())
+  collectionId String
+  tagId        String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, tagId])
+  @@map("collection_tags")
+}
+
+model CollectionLike {
+  id           String     @id @default(cuid())
+  userId       String
+  collectionId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, collectionId])
+  @@map("collection_likes")
+}
+
+model CollectionFollow {
+  id           String     @id @default(cuid())
+  userId       String
+  collectionId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, collectionId])
+  @@map("collection_follows")
+}
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  followingId String
+  follower    User   @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Like {
+  id        String  @id @default(cuid())
+  userId    String
+  artworkId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, artworkId])
+  @@map("likes")
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  // Associations
+  userId    String
+  artworkId String
+  parentId  String? // For nested comments
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork   @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  // Status
+  isEdited Boolean @default(false)
+  isHidden Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  title   String
+  message String
+  data    Json? // Additional data as JSON
+
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  type        ReportType
+  reason      String
+  description String?
+
+  // Reporter
+  reportedById String
+  reportedBy   User   @relation("ReportedBy", fields: [reportedById], references: [id])
+
+  // Reported content (can be user, artwork, comment, etc.)
+  reportedUserId String?
+  reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id])
+
+  // Additional context
+  contentId   String? // ID of reported content (artwork, comment, etc.)
+  contentType String? // Type of reported content
+
+  // Status
+  status     ReportStatus @default(PENDING)
+  reviewedBy String? // Admin who reviewed
+  resolution String? // Resolution notes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reports")
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  // Parties
+  buyerId  String
+  sellerId String
+  buyer    User   @relation("Buyer", fields: [buyerId], references: [id])
+  seller   User   @relation("Seller", fields: [sellerId], references: [id])
+
+  // Transaction details
+  artworkId   String? // If purchasing artwork
+  licenseType ArtworkLicenseType?
+  amount      Decimal             @db.Decimal(10, 2)
+  currency    String              @default("USD")
+
+  // Payment processing
+  paymentId String? // External payment processor ID
+  status    TransactionStatus @default(PENDING)
+
+  // Metadata
+  description String?
+  metadata    Json? // Additional transaction data
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@map("transactions")
+}
+
+model LoginHistory {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress String?
+  userAgent String?
+  location  String?
+
+  loginAt DateTime @default(now())
+
+  @@map("login_history")
+}
+
+// System configuration and settings
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model FeaturedContent {
+  id          String  @id @default(cuid())
+  contentType String // "artwork", "artist", "collection"
+  contentId   String
+  title       String?
+  description String?
+  image       String?
+
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("featured_content")
+}
